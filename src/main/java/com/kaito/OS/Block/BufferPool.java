@@ -28,5 +28,8 @@ public class BufferPool {
         msgBlockList.add(msgBlock);
         free_total.V();
     }
+    public synchronized int getFreeTotal(){
+        return free_total.getMutex();
+    }
 
 }

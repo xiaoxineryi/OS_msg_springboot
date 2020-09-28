@@ -23,6 +23,8 @@ public class MySemaphore {
             notify();
         }
     }
-
+    public int getMutex() {
+        return mutex;
+    }
 
 }

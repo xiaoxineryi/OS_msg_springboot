@@ -17,7 +17,7 @@ public class MySystem {
     private static Integer temp_pid;
     static private List<MyThread> readyList = new ArrayList<>();
     static private List<MyThread> urgentList = new ArrayList<>();
-
+    public static int getTotalSize(){return threadsMap.size();}
     public static List<MyThread> getReadyList() {
         return readyList;
     }
@@ -36,8 +36,14 @@ public class MySystem {
         readyList.add(myThread);
     }
     public synchronized static void putUrgent(MyThread myThread){urgentList.add(myThread);}
+    public static int getfreeTotal(){return bufferPool.getFreeTotal();}
     public static void send(int s_id, byte[] msg, int r_id) {
         send_block(s_id,msg,r_id);
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         CPU.V();
     }
     private static void send_block(int s_id, byte[] msg, int r_id){
@@ -102,12 +108,18 @@ public class MySystem {
     }
 
     public static byte[] receive(int r_id) {
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         MyThread receiver = threadsMap.get(r_id);
         int s_id = 0;
         // -1表示都没有满足的，就放入紧急等待队列
         while ((s_id = getEnoughMsg(receiver)) == -1){
             //没有完整信息的情况  放入紧急等待队列 让CPU执行
             putWait(receiver);
+            temp_pid = -1;
             try {
                 CPU.V();
                 synchronized (receiver) {
@@ -122,10 +134,14 @@ public class MySystem {
         List<MsgBlock> msgList = receiver_map.get(s_id);
         //写入这个消息的发送者
         receiver.setSender_pid(s_id);
-        receiver_map.put(s_id,new LinkedList<MsgBlock>());
+//        receiver_map.put(s_id,new LinkedList<MsgBlock>());
 
         byte[] bytes = getMsg(msgList);
         System.out.println(r_id+"接收到消息"+new String(bytes));
+        int msg_total = msgList.get(0).getMsg_total();
+        for (int i=0;i<msg_total;i++){
+            msgList.remove(0);
+        }
         CPU.V();
         return bytes;
     }
@@ -174,7 +190,7 @@ public class MySystem {
         }else{
             int total = msgList.size();
             System.out.println("the msgList size is"+msgList.size());
-            if(total == msgList.get(0).getMsg_total()){
+            if(total >= msgList.get(0).getMsg_total()){
                 return true;
             }else{
                 return false;
